@@ -4,7 +4,8 @@ const canvas = document.getElementById('canvas1');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-console.log(ctx);
+
+let pushbackMode = false;
 
 ctx.fillStyle = 'yellow';
 ctx.strokeStyle = 'white';
@@ -31,27 +32,29 @@ class Particle {
             const distance = Math.hypot(dx, dy);
 
             if (distance < this.effect.mouse.radius) {
+
+                const force = Math.atan(1 - distance / this.effect.mouse.radius)*4;
                 const angle = Math.atan2(dy, dx);
-                this.x += Math.cos(angle);
-                this.y += Math.sin(angle);
+                this.x += Math.cos(angle) * force;
+                this.y += Math.sin(angle) * force;
             }
         }
-        if (this.x > this.effect.width - this.radius){
+        if (this.x > this.effect.width - this.radius) {
             this.x = this.effect.width - this.radius
-        }else if (this.x < this.radius) {
+        } else if (this.x < this.radius) {
             this.x = this.radius;
         };
 
-        if (this.y > this.effect.height - this.radius){
+        if (this.y > this.effect.height - this.radius) {
             this.y = this.effect.height - this.radius;
-        } else if (this.y < this.radius){
+        } else if (this.y < this.radius) {
             this.y = this.radius;
-        } 
+        }
 
         this.x += this.vx;
         this.y += this.vy;
         if (this.x > this.effect.width - this.radius || this.x < this.radius) this.vx *= -1;
-        if (this.y > this.effect.height - this.radius || this.y < this.radius) this.vy *= -1;       
+        if (this.y > this.effect.height - this.radius || this.y < this.radius) this.vy *= -1;
     }
 
     draw(context) {
@@ -60,6 +63,7 @@ class Particle {
         context.fill();
     }
 }
+
 class Effect {
     constructor(canvas, context) {
         this.canvas = canvas;
@@ -74,12 +78,18 @@ class Effect {
             x: 0,
             y: 0,
             pressed: false,
-            radius: 80
+            radius: 120
         }
 
         window.addEventListener("resize", e => {
             this.resize(e.target.window.innerWidth, e.target.window.innerHeight, context);
-        })
+        });
+
+        window.addEventListener("keydown", e => {
+            if (e.key == " ") {
+                pushbackMode = !pushbackMode;
+            }
+        });
 
         window.addEventListener("mousemove", e => {
             if (this.mouse.pressed) {
@@ -106,19 +116,20 @@ class Effect {
         }
     }
     handleParticle(context) {
-        this.conectParticle(context)
+        this.conectParticlesAndApplyForces(context)
         this.particles.forEach(particle => {
             particle.update();
             particle.draw(context);
         });
     }
 
-    conectParticle(context) {
-        const maxDistance = 80;
+    conectParticlesAndApplyForces(context) {
+        const maxDistance = 60;
         const influenceDistance = 80;
 
         for (let a = 0; a < this.particles.length; ++a) {
             for (let b = a; b < this.particles.length; ++b) {
+
                 const particleA = this.particles[a];
                 const particleB = this.particles[b];
                 const dx = particleA.x - particleB.x;
@@ -127,8 +138,9 @@ class Effect {
 
                 if (distance < maxDistance) {
                     const opacity = 1 - distance / maxDistance;
+                    const force = Math.atan(opacity);
                     context.save();
-                    context.globalAlpha = opacity;
+                    context.globalAlpha = force;
                     context.beginPath();
                     context.moveTo(particleA.x, particleA.y);
                     context.lineTo(particleB.x, particleB.y);
@@ -136,22 +148,19 @@ class Effect {
                     context.restore();
                 }
 
-                //....
-                
-                if (this.mouse.pressed) 
-                {
+                if (pushbackMode) {
                     const dx = particleA.x - particleB.x;
                     const dy = particleA.y - particleB.y;
                     const distance = Math.hypot(dx, dy);
-        
+
                     if (distance < influenceDistance) {
                         const angle = Math.atan2(dy, dx);
                         let force = 1 - distance / influenceDistance;
                         force = Math.atan(force);
-                        particleA.x += (Math.cos(angle)* force);
-                        particleA.y += (Math.sin(angle) * force);
 
-                        particleB.x -= (Math.cos(angle)* force);
+                        particleA.x += (Math.cos(angle) * force);
+                        particleA.y += (Math.sin(angle) * force);
+                        particleB.x -= (Math.cos(angle) * force);
                         particleB.y -= (Math.sin(angle) * force);
                     }
                 }
@@ -170,7 +179,6 @@ class Effect {
     }
 }
 const effect = new Effect(canvas, ctx);
-
 
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
