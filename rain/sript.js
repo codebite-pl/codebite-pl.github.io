@@ -81,7 +81,7 @@ function animate(ctx, canvas, particles, pixelData) {
 class Particle {
     constructor(ctx, canvas) {
         this.x = Math.random() * canvas.width;
-        this.y = 100;
+        this.y = 0;
         this.velocity = Math.random() * 0.5 + 0.1;
         this.speed = 0;
         this.size = Math.random() * 0.5 + 1;
