@@ -5,12 +5,16 @@
     background: black;
 }
 
+body{
+    touch-action: manipulation;
+}
+
 #canvas1{
     border: 2px solid white;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 514px;
-    height: 716px;
+    width: 352px;
+    height: 491px;
 }
